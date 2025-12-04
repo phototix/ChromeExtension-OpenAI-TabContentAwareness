@@ -1,11 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
   const captureBtn = document.getElementById('captureBtn');
+  const reloadBtn = document.getElementById('reloadBtn');
   const promptInput = document.getElementById('promptInput');
   const resultsDiv = document.getElementById('results');
   const imageContainer = document.getElementById('imageContainer');
   const fullscreenImage = document.getElementById('fullscreenImage');
   const enlargedImage = document.getElementById('enlargedImage');
   const closeFullscreen = document.getElementById('closeFullscreen');
+  const copyImageBtn = document.getElementById('copyImage');
+  const copyResultsBtn = document.getElementById('copyResults');
   
   // Connect to the background script
   const backgroundPageConnection = chrome.runtime.connect({
@@ -66,4 +69,40 @@ document.addEventListener('DOMContentLoaded', function() {
       prompt: prompt || undefined
     });
   });
+
+  // Reload current inspected page
+  reloadBtn.addEventListener('click', function() {
+    resultsDiv.textContent = 'Reloading page...';
+    chrome.devtools.inspectedWindow.reload({ ignoreCache: true });
+  });
+
+  // Copy the displayed image to clipboard
+  if (copyImageBtn) {
+    copyImageBtn.addEventListener('click', async function() {
+      try {
+        const img = imageContainer.querySelector('img');
+        if (!img || !img.src) return;
+
+        const res = await fetch(img.src);
+        const blob = await res.blob();
+        const item = new ClipboardItem({ [blob.type || 'image/png']: blob });
+        await navigator.clipboard.write([item]);
+      } catch (err) {
+        console.error('Copy image failed:', err);
+      }
+    });
+  }
+
+  // Copy the results text to clipboard
+  if (copyResultsBtn) {
+    copyResultsBtn.addEventListener('click', async function() {
+      try {
+        const text = resultsDiv.innerText || resultsDiv.textContent || '';
+        if (!text) return;
+        await navigator.clipboard.writeText(text);
+      } catch (err) {
+        console.error('Copy results failed:', err);
+      }
+    });
+  }
 });
