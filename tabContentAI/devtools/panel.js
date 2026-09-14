@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   const captureBtn = document.getElementById('captureBtn');
   const reloadBtn = document.getElementById('reloadBtn');
+  const promptPreset = document.getElementById('promptPreset');
   const promptInput = document.getElementById('promptInput');
   const resultsDiv = document.getElementById('results');
   const imageContainer = document.getElementById('imageContainer');
@@ -9,6 +10,17 @@ document.addEventListener('DOMContentLoaded', function() {
   const closeFullscreen = document.getElementById('closeFullscreen');
   const copyImageBtn = document.getElementById('copyImage');
   const copyResultsBtn = document.getElementById('copyResults');
+
+  if (!promptPreset) {
+    // If you do not see the dropdown in the UI, this typically indicates DevTools is still
+    // running an older copy of panel.html. Closing/reopening DevTools after reloading the
+    // extension usually resolves it.
+    console.warn('[ContentAI] promptPreset dropdown not found. Is panel.html up to date?');
+  }
+
+  const CANNED_PROMPTS = {
+    'etoro-mywatchlist-suggestions': 'You are a portfolio assistant reviewing my eToro MyWatchlist screenshot. Suggest 5 high-potential assets to add next, balancing sectors and risk. For each suggestion include: ticker/name, rationale based on visible data, key catalyst, 1 major risk, and a confidence score from 1-10. End with a short diversification note. If data is missing, state assumptions clearly.'
+  };
   
   // Connect to the background script
   const backgroundPageConnection = chrome.runtime.connect({
@@ -56,6 +68,16 @@ document.addEventListener('DOMContentLoaded', function() {
   closeFullscreen.addEventListener('click', () => {
     fullscreenImage.style.display = 'none';
   });
+
+  // Apply canned prompts to the prompt input when selected
+  if (promptPreset) {
+    promptPreset.addEventListener('change', function() {
+      const selectedPrompt = CANNED_PROMPTS[promptPreset.value];
+      if (selectedPrompt) {
+        promptInput.value = selectedPrompt;
+      }
+    });
+  }
 
   // Send capture command
   captureBtn.addEventListener('click', function() {
